@@ -10,9 +10,7 @@ config = {
     'start_position': [0, 0],
     'goal_position': [9, 0],
     'max_steps': 100,
-    'cost_height': 0.1,
-    'cost_height_max': 1.,
-    'cost_step': 0.01,
+    'cost_height_max': 2.,
     'cost_step_max': 1.,
     'terrain_function': sample_terrain_function
 }
@@ -33,9 +31,7 @@ def test_init(config=config):
     assert env.height == config['height']
     assert env.mountain_height == config['mountain_height']
     assert env._terrain_function == config['terrain_function']
-    assert env.cost_height == config['cost_height']
     assert env.cost_height_max == config['cost_height_max']
-    assert env.cost_step == config['cost_step']
     assert env._start_position == config['start_position']
     assert env.goal_position == config['goal_position']
     assert env._max_steps == config['max_steps']
@@ -50,7 +46,9 @@ def test_init(config=config):
     assert isinstance(env.observation_space, gym.spaces.Box)
     assert env.observation_space.shape == (4,)
     assert np.all(env.observation_space.low == np.array([0, 0, 0, 0]))
-    assert np.all(env.observation_space.high == np.array([1, 1, 10, 10]))
+    assert np.all(env.observation_space.high == np.array([config["cost_height_max"],
+                                                          config["cost_step_max"], 10,
+                                                          10]))
 
 
 # test the reset function
@@ -71,9 +69,15 @@ def test_reset(config=config):
     assert observation.shape == (4,)
     assert np.all(env.observation_space.low == np.array([0, 0, 0, 0]))
 
-
     # Test the info
     assert info == {}
+
+
+def test_reset_with_options(config=config):
+    env = UnevenMaze(config)
+    env.reset(options={"cost_step": 0.1, "cost_height": 0.2})
+    assert env.cost_step == 0.1
+    assert env.cost_height == 0.2
 
 
 def test_step(config=config):
@@ -96,8 +100,10 @@ def test_step(config=config):
         # Test the observation
         assert isinstance(observation, np.ndarray)
         assert observation.shape == (4,)
-        assert np.all(observation >= np.array([0, 0.01, 0, 0]))
-        assert np.all(observation <= np.array([1, 0.01, 10, 10]))
+        assert np.all(observation >= np.array([0, 0, 0, 0]))
+        assert np.all(observation <= np.array([config["cost_height_max"],
+                                               config["cost_step_max"],
+                                               10, 10]))
 
         # Test the reward
         assert isinstance(reward, float)
@@ -186,13 +192,13 @@ def test_reward_function(config=config):
 
     # Going up should be costlier than the step cost
     _, r, _, _, _ = env.step(0)
-    assert r < config["cost_step"]
+    assert r < env.cost_step
 
     # Going down should be only as costly as the step cost
     _, r, _, _, _ = env.step(1)
 
-    assert r == -1. * config["cost_step"]
+    assert r == -1. * env.cost_step
 
     # Bumping your head to the wall should be as costly as the step cost
     _, r, _, _, _ = env.step(3)
-    assert r == -1. * config["cost_step"]
+    assert r == -1. * env.cost_step

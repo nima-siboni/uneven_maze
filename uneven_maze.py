@@ -7,7 +7,7 @@
 # The height in of the map is represented by a function of x, y coordinates. The function is
 # specified as a parameter of the environment.
 import copy
-from typing import Callable, Dict, List, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 # The parameters of the environment are:
 # - the size of the map (width and height)
@@ -63,9 +63,9 @@ class UnevenMaze(gym.Env):
         self.height: int = config['height']
         self.mountain_height: float = config['mountain_height']
         self._terrain_function: Callable = config['terrain_function']
-        self.cost_height: float = config['cost_height']
         self.cost_height_max: float = config['cost_height_max']
-        self.cost_step: float = config['cost_step']
+        self._cost_height: Optional[float] = None
+        self._cost_step: Optional[float] = None
         self.cost_step_max: float = config['cost_step_max']
         self._start_position: List[int, int] = config['start_position']
         self.goal_position: Tuple[int, int] = config['goal_position']
@@ -115,11 +115,16 @@ class UnevenMaze(gym.Env):
 
         return observation, reward, terminated, truncated, info
 
-    def reset(self) -> Tuple[np.ndarray, Dict]:
+    def reset(self, seed: Optional[int] = None, options: Optional[Dict] = None) -> Tuple[
+        np.ndarray, Dict]:
         """
         Reset the environment.
         :return: the initial observation
         """
+        # check if seed is given, then issue an error
+        if seed is not None:
+            raise ValueError('UnevenMaze does not support seeding')
+
         # Reset the step counter
         self._current_step = 0
 
@@ -130,6 +135,18 @@ class UnevenMaze(gym.Env):
         observation = self._get_observation()
 
         inforeset = {}
+
+        # check if options is not given, the set the cost step to a random value between 0 and cost_step_max
+        if options is None:
+            self._cost_step = np.random.uniform(0, self.cost_step_max)
+        else:
+            self._cost_step = options['cost_step']
+
+        # check if option is not given, then set the cost height to a random value between 0 and cost_height_max
+        if options is None:
+            self._cost_height = np.random.uniform(0, self.cost_height_max)
+        else:
+            self._cost_height = options['cost_height']
 
         return observation, inforeset
 
@@ -288,4 +305,12 @@ class UnevenMaze(gym.Env):
     @property
     def current_position(self):
         return copy.deepcopy(self._current_position)
+
+    @property
+    def cost_height(self):
+        return self._cost_height
+
+    @property
+    def cost_step(self):
+        return self._cost_step
 
