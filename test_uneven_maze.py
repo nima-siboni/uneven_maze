@@ -158,3 +158,40 @@ def test_the_truncation_condition(config=config):
 
     assert not terminated
     assert truncated
+
+
+def test_reward_function(config=config):
+    """
+    Test the reward function of the environment.
+    :param config: the configuration of the environment
+    :return: None
+    """
+    # Define the environment
+    env = UnevenMaze(config)
+
+    # Reset the environment
+    env.reset()
+
+    # Test the step function
+    for action in range(4):
+        # Take a step
+        observation, reward, terminated, truncated, info = env.step(action)
+
+        # Test the reward
+        assert isinstance(reward, float)
+        assert reward <= 0.
+
+    env.reset()
+
+    # Going up should be costlier than the step cost
+    _, r, _, _, _ = env.step(0)
+    assert r < config["cost_step"]
+
+    # Going down should be only as costly as the step cost
+    _, r, _, _, _ = env.step(1)
+
+    assert r == -1. * config["cost_step"]
+
+    # Bumping your head to the wall should be as costly as the step cost
+    _, r, _, _, _ = env.step(3)
+    assert r == -1. * config["cost_step"]

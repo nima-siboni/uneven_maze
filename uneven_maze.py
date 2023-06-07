@@ -12,7 +12,8 @@ from typing import Callable, Dict, List, Tuple
 # The parameters of the environment are:
 # - the size of the map (width and height)
 # - the function which represents the height of the map
-# - the weight of the height difference in the step cost
+# - the weight of the height difference in the reward
+# - the weight of the constant step cost in the reward
 # - the constant step cost
 # - the starting position of the agent
 # - the goal position of the agent
@@ -157,7 +158,8 @@ class UnevenMaze(gym.Env):
 
         return next_position
 
-    def _get_reward(self, current_position: Tuple, next_position: Tuple) -> float:
+    def _get_reward(self, current_position: List[int], next_position: List[int]) -> \
+            float:
         """
         Get the reward.
         :param current_position: the current position
@@ -165,10 +167,10 @@ class UnevenMaze(gym.Env):
         :return: the reward
         """
         # Get the height of the current position
-        current_height = self._get_altitude()
+        current_height = self._get_altitude(current_position)
 
         # Get the height of the next position
-        next_height = self._get_altitude()
+        next_height = self._get_altitude(next_position)
 
         # Get the height difference
         height_difference = next_height - current_height
@@ -251,14 +253,12 @@ class UnevenMaze(gym.Env):
         # Show the plot
         plt.show()
 
-    def _get_altitude(self):
+    def _get_altitude(self, position):
         """
-        Get the height.
+        Get the altitude from the position
         :return: the height
         """
-        # Get the height
-        altitude = self._terrain_function(self.current_position[0], self.current_position[1],
-                                   self.height, self.width, self.mountain_height)
+        altitude = self._terrain_function(position[0], position[1], self.height, self.width, self.mountain_height)
         return altitude
 
     def _get_terminated(self):
