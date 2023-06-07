@@ -13,6 +13,7 @@ config = {
     'cost_height': 0.1,
     'cost_height_max': 1.,
     'cost_step': 0.01,
+    'cost_step_max': 1.,
     'terrain_function': sample_terrain_function
 }
 
@@ -47,9 +48,9 @@ def test_init(config=config):
 
     # Test the observation space
     assert isinstance(env.observation_space, gym.spaces.Box)
-    assert env.observation_space.shape == (3,)
-    assert np.all(env.observation_space.low == np.array([0, 0, 0]))
-    assert np.all(env.observation_space.high == np.array([1, 10, 10]))
+    assert env.observation_space.shape == (4,)
+    assert np.all(env.observation_space.low == np.array([0, 0, 0, 0]))
+    assert np.all(env.observation_space.high == np.array([1, 1, 10, 10]))
 
 
 # test the reset function
@@ -67,8 +68,8 @@ def test_reset(config=config):
 
     # Test the observation
     assert isinstance(observation, np.ndarray)
-    assert observation.shape == (3,)
-    assert np.all(env.observation_space.low == np.array([0, 0, 0]))
+    assert observation.shape == (4,)
+    assert np.all(env.observation_space.low == np.array([0, 0, 0, 0]))
 
 
     # Test the info
@@ -94,9 +95,9 @@ def test_step(config=config):
 
         # Test the observation
         assert isinstance(observation, np.ndarray)
-        assert observation.shape == (3,)
-        assert np.all(observation >= np.array([0, 0, 0]))
-        assert np.all(observation <= np.array([1, 10, 10]))
+        assert observation.shape == (4,)
+        assert np.all(observation >= np.array([0, 0.01, 0, 0]))
+        assert np.all(observation <= np.array([1, 0.01, 10, 10]))
 
         # Test the reward
         assert isinstance(reward, float)

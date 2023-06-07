@@ -66,19 +66,21 @@ class UnevenMaze(gym.Env):
         self.cost_height: float = config['cost_height']
         self.cost_height_max: float = config['cost_height_max']
         self.cost_step: float = config['cost_step']
+        self.cost_step_max: float = config['cost_step_max']
         self._start_position: List[int, int] = config['start_position']
         self.goal_position: Tuple[int, int] = config['goal_position']
         self._max_steps: int = config['max_steps']
         self._current_step = 0
         self._current_position = copy.deepcopy(self._start_position)
-
+        self._fig = None
+        self._ax = None
         # Define the action space
         self.action_space = gym.spaces.Discrete(4)
 
         # Define the observation space
         self.observation_space = gym.spaces.Box(
-            low=np.array([0, 0, 0]),
-            high=np.array([self.cost_height_max, self.width,
+            low=np.array([0, 0, 0, 0]),
+            high=np.array([self.cost_height_max, self.cost_step_max, self.width,
                            self.height]),
             dtype=np.float32
         )
@@ -151,9 +153,9 @@ class UnevenMaze(gym.Env):
             raise ValueError('Invalid action.')
 
         # if the agent goes out of bounds of height or width, it stays in the same position
-        if next_position[0] < 0 or next_position[0] >= self.width:
+        if next_position[0] < 0 or next_position[0] >= self.height:
             next_position[0] = self.current_position[0]
-        if next_position[1] < 0 or next_position[1] >= self.height:
+        if next_position[1] < 0 or next_position[1] >= self.width:
             next_position[1] = self.current_position[1]
 
         return next_position
@@ -202,6 +204,7 @@ class UnevenMaze(gym.Env):
         # Get the observation
         observation = np.array([
             self.cost_height,
+            self.cost_step,
             self.current_position[0],
             self.current_position[1],
         ])
@@ -223,35 +226,38 @@ class UnevenMaze(gym.Env):
         color_gradient = np.vstack((color_gradient, color_gradient, color_gradient)).T
 
         # Define the figure
-        fig = plt.figure(figsize=(8, 8))
-        ax = fig.add_subplot(111)
+        if not self._fig:
+            self._fig = plt.figure(figsize=(8, 8))
+        if not self._ax:
+            self._ax = self._fig.add_subplot(111)
 
         # Define the x and y coordinates
-        x = np.linspace(0, self.width - 1, self.width)
-        y = np.linspace(0, self.height - 1, self.height)
-        x, y = np.meshgrid(x, y)
+        altitudes = np.zeros(shape=(self.height, self.width))
+
 
         # Define the height
-        altitude = self._get_altitude()
+        for i in range(self.height):
+            for j in range(self.width):
+                altitudes[i, j] = self._get_altitude([i, j])
 
         # Plot the height
-        ax.imshow(color_gradient[int(altitude)], extent=(0, self.width, 0,
-                                                                     self.height))
+        self._ax.imshow(altitudes)
 
         # Plot the start
-        ax.plot(self._start_position[0] + 0.5, self._start_position[1] + 0.5, 'ro', markersize=10)
+        self._ax.plot(self._start_position[1], self._start_position[0], 'ro', markersize=10)
 
         # Plot the goal
-        ax.plot(self.goal_position[0] + 0.5, self.goal_position[1] + 0.5, 'go', markersize=10)
+        self._ax.plot(self.goal_position[1], self.goal_position[0], 'go', markersize=10)
 
         # Plot the agent
-        ax.plot(self.current_position[0] + 0.5, self.current_position[1] + 0.5, 'bo', markersize=10)
+        self._ax.plot(self.current_position[1], self.current_position[0], 'bo', markersize=10)
 
         # Set the title
-        ax.set_title('Step: {}'.format(self._current_step))
+        self._ax.set_title('Step: {}'.format(self._current_step))
 
         # Show the plot
-        plt.show()
+        plt.show(block=False)
+        plt.pause(0.1)
 
     def _get_altitude(self, position):
         """
