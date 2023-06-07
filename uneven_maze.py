@@ -63,12 +63,14 @@ class UnevenMaze(gym.Env):
         self.height: int = config['height']
         self.mountain_height: float = config['mountain_height']
         self._terrain_function: Callable = config['terrain_function']
-        self.cost_height_max: float = config['cost_height_max']
+        self._cost_height_max: float = config['cost_height_max']
+        self._cost_height_min: float = config.get('cost_height_min', 0.)
         self._cost_height: Optional[float] = None
         self._cost_step: Optional[float] = None
-        self.cost_step_max: float = config['cost_step_max']
+        self._cost_step_max: float = config['cost_step_max']
+        self._cost_step_min: float = config.get('cost_step_min', 0.)
         self._start_position: List[int, int] = config['start_position']
-        self.goal_position: Tuple[int, int] = config['goal_position']
+        self._goal_position: Tuple[int, int] = config['goal_position']
         self._max_steps: int = config['max_steps']
         self._current_step = 0
         self._current_position = copy.deepcopy(self._start_position)
@@ -79,8 +81,8 @@ class UnevenMaze(gym.Env):
 
         # Define the observation space
         self.observation_space = gym.spaces.Box(
-            low=np.array([0, 0, 0, 0]),
-            high=np.array([self.cost_height_max, self.cost_step_max, self.width,
+            low=np.array([self._cost_height_min, self._cost_step_min, 0, 0]),
+            high=np.array([self._cost_height_max, self._cost_step_max, self.width,
                            self.height]),
             dtype=np.float32
         )
@@ -136,15 +138,15 @@ class UnevenMaze(gym.Env):
 
         inforeset = {}
 
-        # check if options is not given, the set the cost step to a random value between 0 and cost_step_max
+        # check if options is not given, the set the cost step to a random value between 0 and _cost_step_max
         if options is None:
-            self._cost_step = np.random.uniform(0, self.cost_step_max)
+            self._cost_step = np.random.uniform(0, self._cost_step_max)
         else:
             self._cost_step = options['cost_step']
 
-        # check if option is not given, then set the cost height to a random value between 0 and cost_height_max
+        # check if option is not given, then set the cost height to a random value between 0 and _cost_height_max
         if options is None:
-            self._cost_height = np.random.uniform(0, self.cost_height_max)
+            self._cost_height = np.random.uniform(0, self._cost_height_max)
         else:
             self._cost_height = options['cost_height']
 
@@ -264,7 +266,7 @@ class UnevenMaze(gym.Env):
         self._ax.plot(self._start_position[1], self._start_position[0], 'ro', markersize=10)
 
         # Plot the goal
-        self._ax.plot(self.goal_position[1], self.goal_position[0], 'go', markersize=10)
+        self._ax.plot(self._goal_position[1], self._goal_position[0], 'go', markersize=10)
 
         # Plot the agent
         self._ax.plot(self.current_position[1], self.current_position[0], 'bo', markersize=10)
@@ -286,7 +288,7 @@ class UnevenMaze(gym.Env):
 
     def _get_terminated(self):
         """if the current position is the goal position, return True"""
-        if self.current_position == self.goal_position:
+        if self.current_position == self._goal_position:
             return True
         else:
             return False

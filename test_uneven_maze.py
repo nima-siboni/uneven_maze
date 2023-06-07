@@ -31,9 +31,9 @@ def test_init(config=config):
     assert env.height == config['height']
     assert env.mountain_height == config['mountain_height']
     assert env._terrain_function == config['terrain_function']
-    assert env.cost_height_max == config['cost_height_max']
+    assert env._cost_height_max == config['cost_height_max']
     assert env._start_position == config['start_position']
-    assert env.goal_position == config['goal_position']
+    assert env._goal_position == config['goal_position']
     assert env._max_steps == config['max_steps']
     assert env._current_step == 0
     assert env._current_position == config['start_position']
