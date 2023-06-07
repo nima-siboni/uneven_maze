@@ -20,8 +20,6 @@ from typing import Callable, Dict, List, Tuple
 # Import the necessary packages
 import gymnasium as gym
 import numpy as np
-import random
-import math
 import matplotlib.pyplot as plt
 
 

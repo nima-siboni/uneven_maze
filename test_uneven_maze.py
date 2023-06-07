@@ -1,5 +1,5 @@
 # testing the uneven maze
-from UnevenMaze import sample_terrain_function, UnevenMaze
+from uneven_maze import sample_terrain_function, UnevenMaze
 import gymnasium as gym
 import numpy as np
 
