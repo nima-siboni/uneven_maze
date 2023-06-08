@@ -1,6 +1,6 @@
-setuptools~=65.5.1
 gymnasium~=0.28.1
-numpy~=1.23.5
 matplotlib~=3.6.2
-pytest~=7.3.1
+numpy~=1.23.5
 pre-commit~=3.3.2
+pytest~=7.3.1
+setuptools~=65.5.1

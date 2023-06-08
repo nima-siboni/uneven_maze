@@ -25,8 +25,9 @@ import matplotlib.pyplot as plt
 
 
 # Define the height function
-def sample_terrain_function(x: int, y: int, height: int, width: int, mountain_height: float) -> \
-        float:
+def sample_terrain_function(
+    x: int, y: int, height: int, width: int, mountain_height: float
+) -> float:
     """
     The height function is such that along the y axis it is a parabola with maximum at the
     center and zeros at the beginning and end of the domain. This parabola is reduced by a
@@ -43,8 +44,8 @@ def sample_terrain_function(x: int, y: int, height: int, width: int, mountain_he
     """
     # Define the y of the highest point of the mountain
     center_x = height / 2
-    scaled_altitude_x = (1. - (x / center_x - 1.) ** 2)
-    scaled_altitude = scaled_altitude_x * (1. - y / width)
+    scaled_altitude_x = 1.0 - (x / center_x - 1.0) ** 2
+    scaled_altitude = scaled_altitude_x * (1.0 - y / width)
     return mountain_height * scaled_altitude
 
 
@@ -59,19 +60,19 @@ class UnevenMaze(gym.Env):
     def __init__(self, config: Dict):
         # Define the parameters of the environment
         self._config = config
-        self.width: int = config['width']
-        self.height: int = config['height']
-        self.mountain_height: float = config['mountain_height']
-        self._terrain_function: Callable = config['terrain_function']
-        self._cost_height_max: float = config['cost_height_max']
-        self._cost_height_min: float = config.get('cost_height_min', 0.)
+        self.width: int = config["width"]
+        self.height: int = config["height"]
+        self.mountain_height: float = config["mountain_height"]
+        self._terrain_function: Callable = config["terrain_function"]
+        self._cost_height_max: float = config["cost_height_max"]
+        self._cost_height_min: float = config.get("cost_height_min", 0.0)
         self._cost_height: Optional[float] = None
         self._cost_step: Optional[float] = None
-        self._cost_step_max: float = config['cost_step_max']
-        self._cost_step_min: float = config.get('cost_step_min', 0.)
-        self._start_position: List[int, int] = config['start_position']
-        self._goal_position: Tuple[int, int] = config['goal_position']
-        self._max_steps: int = config['max_steps']
+        self._cost_step_max: float = config["cost_step_max"]
+        self._cost_step_min: float = config.get("cost_step_min", 0.0)
+        self._start_position: List[int, int] = config["start_position"]
+        self._goal_position: Tuple[int, int] = config["goal_position"]
+        self._max_steps: int = config["max_steps"]
         self._current_step = 0
         self._current_position = copy.deepcopy(self._start_position)
         self._fig = None
@@ -82,9 +83,10 @@ class UnevenMaze(gym.Env):
         # Define the observation space
         self.observation_space = gym.spaces.Box(
             low=np.array([self._cost_height_min, self._cost_step_min, 0, 0]),
-            high=np.array([self._cost_height_max, self._cost_step_max, self.width,
-                           self.height]),
-            dtype=np.float32
+            high=np.array(
+                [self._cost_height_max, self._cost_step_max, self.width, self.height]
+            ),
+            dtype=np.float32,
         )
 
     def step(self, action: int) -> Tuple[np.ndarray, float, bool, bool, Dict]:
@@ -117,15 +119,16 @@ class UnevenMaze(gym.Env):
 
         return observation, reward, terminated, truncated, info
 
-    def reset(self, seed: Optional[int] = None, options: Optional[Dict] = None) -> Tuple[
-        np.ndarray, Dict]:
+    def reset(
+        self, seed: Optional[int] = None, options: Optional[Dict] = None
+    ) -> Tuple[np.ndarray, Dict]:
         """
         Reset the environment.
         :return: the initial observation
         """
         # check if seed is given, then issue an error
         if seed is not None:
-            raise ValueError('UnevenMaze does not support seeding')
+            raise ValueError("UnevenMaze does not support seeding")
 
         # Reset the step counter
         self._current_step = 0
@@ -140,15 +143,19 @@ class UnevenMaze(gym.Env):
 
         # check if options is not given, the set the cost step to a random value between 0 and _cost_step_max
         if options is None:
-            self._cost_step = np.random.uniform(self._cost_step_min, self._cost_step_max)
+            self._cost_step = np.random.uniform(
+                self._cost_step_min, self._cost_step_max
+            )
         else:
-            self._cost_step = options['cost_step']
+            self._cost_step = options["cost_step"]
 
         # check if option is not given, then set the cost height to a random value between 0 and _cost_height_max
         if options is None:
-            self._cost_height = np.random.uniform(self._cost_height_min, self._cost_height_max)
+            self._cost_height = np.random.uniform(
+                self._cost_height_min, self._cost_height_max
+            )
         else:
-            self._cost_height = options['cost_height']
+            self._cost_height = options["cost_height"]
 
         return observation, inforeset
 
@@ -169,7 +176,7 @@ class UnevenMaze(gym.Env):
         elif action == 3:
             next_position[1] -= 1
         else:
-            raise ValueError('Invalid action.')
+            raise ValueError("Invalid action.")
 
         # if the agent goes out of bounds of height or width, it stays in the same position
         if next_position[0] < 0 or next_position[0] >= self.height:
@@ -179,8 +186,9 @@ class UnevenMaze(gym.Env):
 
         return next_position
 
-    def _get_reward(self, current_position: List[int], next_position: List[int]) -> \
-            float:
+    def _get_reward(
+        self, current_position: List[int], next_position: List[int]
+    ) -> float:
         """
         Get the reward.
         :param current_position: the current position
@@ -197,10 +205,10 @@ class UnevenMaze(gym.Env):
         height_difference = next_height - current_height
 
         # Only reward negatively for increasing height
-        height_difference = height_difference if height_difference > 0 else 0.
+        height_difference = height_difference if height_difference > 0 else 0.0
 
         # Get the reward
-        reward = - self.cost_height * height_difference - self.cost_step
+        reward = -self.cost_height * height_difference - self.cost_step
 
         return reward
 
@@ -221,12 +229,14 @@ class UnevenMaze(gym.Env):
         :return: the observation
         """
         # Get the observation
-        observation = np.array([
-            self.cost_height,
-            self.cost_step,
-            self.current_position[0],
-            self.current_position[1],
-        ])
+        observation = np.array(
+            [
+                self.cost_height,
+                self.cost_step,
+                self.current_position[0],
+                self.current_position[1],
+            ]
+        )
 
         return observation
 
@@ -240,10 +250,6 @@ class UnevenMaze(gym.Env):
 
         :return:
         """
-        # Define the color gradient
-        color_gradient = np.linspace(0., 1., 256)
-        color_gradient = np.vstack((color_gradient, color_gradient, color_gradient)).T
-
         # Define the figure
         if not self._fig:
             self._fig = plt.figure(figsize=(8, 8))
@@ -252,7 +258,6 @@ class UnevenMaze(gym.Env):
 
         # Define the x and y coordinates
         altitudes = np.zeros(shape=(self.height, self.width))
-
 
         # Define the height
         for i in range(self.height):
@@ -263,16 +268,22 @@ class UnevenMaze(gym.Env):
         self._ax.imshow(altitudes)
 
         # Plot the start
-        self._ax.plot(self._start_position[1], self._start_position[0], 'ro', markersize=10)
+        self._ax.plot(
+            self._start_position[1], self._start_position[0], "ro", markersize=10
+        )
 
         # Plot the goal
-        self._ax.plot(self._goal_position[1], self._goal_position[0], 'go', markersize=10)
+        self._ax.plot(
+            self._goal_position[1], self._goal_position[0], "go", markersize=10
+        )
 
         # Plot the agent
-        self._ax.plot(self.current_position[1], self.current_position[0], 'bo', markersize=10)
+        self._ax.plot(
+            self.current_position[1], self.current_position[0], "bo", markersize=10
+        )
 
         # Set the title
-        self._ax.set_title('Step: {}'.format(self._current_step))
+        self._ax.set_title("Step: {}".format(self._current_step))
 
         # Show the plot
         plt.show(block=False)
@@ -283,7 +294,9 @@ class UnevenMaze(gym.Env):
         Get the altitude from the position
         :return: the height
         """
-        altitude = self._terrain_function(position[0], position[1], self.height, self.width, self.mountain_height)
+        altitude = self._terrain_function(
+            position[0], position[1], self.height, self.width, self.mountain_height
+        )
         return altitude
 
     def _get_terminated(self):
@@ -315,4 +328,3 @@ class UnevenMaze(gym.Env):
     @property
     def cost_step(self):
         return self._cost_step
-

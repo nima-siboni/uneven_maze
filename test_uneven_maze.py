@@ -4,15 +4,15 @@ import gymnasium as gym
 import numpy as np
 
 config = {
-    'width': 10,
-    'height': 10,
-    'mountain_height': 1.,
-    'start_position': [0, 0],
-    'goal_position': [9, 0],
-    'max_steps': 100,
-    'cost_height_max': 2.,
-    'cost_step_max': 1.,
-    'terrain_function': sample_terrain_function
+    "width": 10,
+    "height": 10,
+    "mountain_height": 1.0,
+    "start_position": [0, 0],
+    "goal_position": [9, 0],
+    "max_steps": 100,
+    "cost_height_max": 2.0,
+    "cost_step_max": 1.0,
+    "terrain_function": sample_terrain_function,
 }
 
 
@@ -27,16 +27,16 @@ def test_init(config=config):
     assert isinstance(env, UnevenMaze)
 
     # Test the parameters
-    assert env.width == config['width']
-    assert env.height == config['height']
-    assert env.mountain_height == config['mountain_height']
-    assert env._terrain_function == config['terrain_function']
-    assert env._cost_height_max == config['cost_height_max']
-    assert env._start_position == config['start_position']
-    assert env._goal_position == config['goal_position']
-    assert env._max_steps == config['max_steps']
+    assert env.width == config["width"]
+    assert env.height == config["height"]
+    assert env.mountain_height == config["mountain_height"]
+    assert env._terrain_function == config["terrain_function"]
+    assert env._cost_height_max == config["cost_height_max"]
+    assert env._start_position == config["start_position"]
+    assert env._goal_position == config["goal_position"]
+    assert env._max_steps == config["max_steps"]
     assert env._current_step == 0
-    assert env._current_position == config['start_position']
+    assert env._current_position == config["start_position"]
 
     # Test the action space
     assert isinstance(env.action_space, gym.spaces.Discrete)
@@ -46,9 +46,10 @@ def test_init(config=config):
     assert isinstance(env.observation_space, gym.spaces.Box)
     assert env.observation_space.shape == (4,)
     assert np.all(env.observation_space.low == np.array([0, 0, 0, 0]))
-    assert np.all(env.observation_space.high == np.array([config["cost_height_max"],
-                                                          config["cost_step_max"], 10,
-                                                          10]))
+    assert np.all(
+        env.observation_space.high
+        == np.array([config["cost_height_max"], config["cost_step_max"], 10, 10])
+    )
 
 
 # test the reset function
@@ -101,9 +102,10 @@ def test_step(config=config):
         assert isinstance(observation, np.ndarray)
         assert observation.shape == (4,)
         assert np.all(observation >= np.array([0, 0, 0, 0]))
-        assert np.all(observation <= np.array([config["cost_height_max"],
-                                               config["cost_step_max"],
-                                               10, 10]))
+        assert np.all(
+            observation
+            <= np.array([config["cost_height_max"], config["cost_step_max"], 10, 10])
+        )
 
         # Test the reward
         assert isinstance(reward, float)
@@ -186,7 +188,7 @@ def test_reward_function(config=config):
 
         # Test the reward
         assert isinstance(reward, float)
-        assert reward <= 0.
+        assert reward <= 0.0
 
     env.reset()
 
@@ -197,16 +199,16 @@ def test_reward_function(config=config):
     # Going down should be only as costly as the step cost
     _, r, _, _, _ = env.step(1)
 
-    assert r == -1. * env.cost_step
+    assert r == -1.0 * env.cost_step
 
     # Bumping your head to the wall should be as costly as the step cost
     _, r, _, _, _ = env.step(3)
-    assert r == -1. * env.cost_step
+    assert r == -1.0 * env.cost_step
 
 
 def test_reward_height_contribution(config=config):
-    config["cost_step_max"] = 0.
-    config["cost_step_min"] = 0.
+    config["cost_step_max"] = 0.0
+    config["cost_step_min"] = 0.0
     config["cost_height_max"] = 3.14  # arbitrary number
     config["cost_height_min"] = 3.14
     env = UnevenMaze(config)
@@ -220,10 +222,10 @@ def test_reward_height_contribution(config=config):
 
 
 def test_reward_step_contribution(config=config):
-    config["cost_step_max"] = 2.5 # arbitrary number
+    config["cost_step_max"] = 2.5  # arbitrary number
     config["cost_step_min"] = 2.5
-    config["cost_height_max"] = 0.
-    config["cost_height_min"] = 0.
+    config["cost_height_max"] = 0.0
+    config["cost_height_min"] = 0.0
     env = UnevenMaze(config)
     env.reset()
     total_reward = 0
