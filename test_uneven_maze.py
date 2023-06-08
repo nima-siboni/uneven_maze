@@ -207,8 +207,8 @@ def test_reward_function(config=config):
 def test_reward_height_contribution(config=config):
     config["cost_step_max"] = 0.
     config["cost_step_min"] = 0.
-    config["cost_height_max"] = 1.
-    config["cost_height_min"] = 1.
+    config["cost_height_max"] = 3.14  # arbitrary number
+    config["cost_height_min"] = 3.14
     env = UnevenMaze(config)
     env.reset()
     total_reward = 0
@@ -216,4 +216,19 @@ def test_reward_height_contribution(config=config):
     for _ in range(config["height"]):
         _, r, _, _, _ = env.step(0)
         total_reward += r
-    assert total_reward == -1. * config["mountain_height"]
+    assert total_reward == -3.14 * config["mountain_height"]
+
+
+def test_reward_step_contribution(config=config):
+    config["cost_step_max"] = 2.5 # arbitrary number
+    config["cost_step_min"] = 2.5
+    config["cost_height_max"] = 0.
+    config["cost_height_min"] = 0.
+    env = UnevenMaze(config)
+    env.reset()
+    total_reward = 0
+    # the total reward of going up the mountain should be equal to the height of the mountain
+    for _ in range(config["height"]):
+        _, r, _, _, _ = env.step(0)
+        total_reward += r
+    assert total_reward == -2.5 * config["height"]
