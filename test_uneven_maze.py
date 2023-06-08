@@ -202,3 +202,18 @@ def test_reward_function(config=config):
     # Bumping your head to the wall should be as costly as the step cost
     _, r, _, _, _ = env.step(3)
     assert r == -1. * env.cost_step
+
+
+def test_reward_height_contribution(config=config):
+    config["cost_step_max"] = 0.
+    config["cost_step_min"] = 0.
+    config["cost_height_max"] = 1.
+    config["cost_height_min"] = 1.
+    env = UnevenMaze(config)
+    env.reset()
+    total_reward = 0
+    # the total reward of going up the mountain should be equal to the height of the mountain
+    for _ in range(config["height"]):
+        _, r, _, _, _ = env.step(0)
+        total_reward += r
+    assert total_reward == -1. * config["mountain_height"]

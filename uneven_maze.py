@@ -140,13 +140,13 @@ class UnevenMaze(gym.Env):
 
         # check if options is not given, the set the cost step to a random value between 0 and _cost_step_max
         if options is None:
-            self._cost_step = np.random.uniform(0, self._cost_step_max)
+            self._cost_step = np.random.uniform(self._cost_step_min, self._cost_step_max)
         else:
             self._cost_step = options['cost_step']
 
         # check if option is not given, then set the cost height to a random value between 0 and _cost_height_max
         if options is None:
-            self._cost_height = np.random.uniform(0, self._cost_height_max)
+            self._cost_height = np.random.uniform(self._cost_height_min, self._cost_height_max)
         else:
             self._cost_height = options['cost_height']
 
