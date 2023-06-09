@@ -70,11 +70,12 @@ class UnevenMaze(gym.Env):
         self._cost_step: Optional[float] = None
         self._cost_step_max: float = config["cost_step_max"]
         self._cost_step_min: float = config.get("cost_step_min", 0.0)
-        self._start_position: List[int, int] = config["start_position"]
+        self._start_position = None
         self._goal_position: Tuple[int, int] = config["goal_position"]
         self._max_steps: int = config["max_steps"]
         self._current_step = 0
-        self._current_position = copy.deepcopy(self._start_position)
+        self._current_position = None
+        self._last_position = None
         self._fig = None
         self._ax = None
         # Define the action space
@@ -84,7 +85,7 @@ class UnevenMaze(gym.Env):
         self.observation_space = gym.spaces.Box(
             low=np.array([self._cost_height_min, self._cost_step_min, 0, 0]),
             high=np.array(
-                [self._cost_height_max, self._cost_step_max, self.width, self.height]
+                [self._cost_height_max, self._cost_step_max, self.height, self.width]
             ),
             dtype=np.float32,
         )
@@ -101,18 +102,18 @@ class UnevenMaze(gym.Env):
         # Get the next position
         next_position = self._get_next_position(action)
 
-        # Get the reward
-        reward = self._get_reward(self.current_position, next_position)
-
-        # Update the current position
-        self._current_position = self._set_position(next_position)
-
-        # Get the observation
-        observation = self._get_observation()
+        # Update the current position and last position
+        self._set_positions(next_position)
 
         # Get the terminated and truncated flags
         terminated = self._get_terminated()
         truncated = self._get_truncated()
+
+        # Get the reward
+        reward = self._get_reward(self.last_position, self.current_position, terminated)
+
+        # Get the observation
+        observation = self._get_observation()
 
         # Define the info
         info = {}
@@ -134,15 +135,16 @@ class UnevenMaze(gym.Env):
         self._current_step = 0
 
         # Reset the current position
-        self._current_position = self._set_position(self._start_position)
+        if options is None or len(options) == 0:
+            self._set_positions()
+        else:
+            self._set_positions(options["start_position"])
 
-        # Get the observation
-        observation = self._get_observation()
-
-        inforeset = {}
+        # Save the start position
+        self._start_position = self.current_position
 
         # check if options is not given, the set the cost step to a random value between 0 and _cost_step_max
-        if options is None:
+        if options is None or len(options) == 0:
             self._cost_step = np.random.uniform(
                 self._cost_step_min, self._cost_step_max
             )
@@ -150,12 +152,17 @@ class UnevenMaze(gym.Env):
             self._cost_step = options["cost_step"]
 
         # check if option is not given, then set the cost height to a random value between 0 and _cost_height_max
-        if options is None:
+        if options is None or len(options) == 0:
             self._cost_height = np.random.uniform(
                 self._cost_height_min, self._cost_height_max
             )
         else:
             self._cost_height = options["cost_height"]
+
+        # Get the observation
+        observation = self._get_observation()
+
+        inforeset = {}
 
         return observation, inforeset
 
@@ -179,15 +186,15 @@ class UnevenMaze(gym.Env):
             raise ValueError("Invalid action.")
 
         # if the agent goes out of bounds of height or width, it stays in the same position
-        if next_position[0] < 0 or next_position[0] >= self.height:
+        if next_position[0] < 0 or next_position[0] > self.height:
             next_position[0] = self.current_position[0]
-        if next_position[1] < 0 or next_position[1] >= self.width:
+        if next_position[1] < 0 or next_position[1] > self.width:
             next_position[1] = self.current_position[1]
 
         return next_position
 
     def _get_reward(
-        self, current_position: List[int], next_position: List[int]
+        self, last_position: List[int], current_position: List[int], terminated: bool
     ) -> float:
         """
         Get the reward.
@@ -196,32 +203,40 @@ class UnevenMaze(gym.Env):
         :return: the reward
         """
         # Get the height of the current position
-        current_height = self._get_altitude(current_position)
+        last_height = self._get_altitude(last_position)
 
         # Get the height of the next position
-        next_height = self._get_altitude(next_position)
+        current_height = self._get_altitude(current_position)
 
         # Get the height difference
-        height_difference = next_height - current_height
+        height_difference = current_height - last_height
 
         # Only reward negatively for increasing height
         height_difference = height_difference if height_difference > 0 else 0.0
 
         # Get the reward
-        reward = -self.cost_height * height_difference - self.cost_step
+        if terminated:
+            reward = 0.0
+        else:
+            reward = -self.cost_height * height_difference - self.cost_step
 
         return reward
 
-    def _set_position(self, position) -> np.ndarray:
+    def _set_positions(self, position: Optional = None) -> np.ndarray:
         """
-        Set the position.
-        :param position: the position
-        :return: the position
+        Set the last ond current positions.
+        :param position: the current position
         """
         # Set the position
-        self._current_position = copy.deepcopy(position)
-
-        return self._current_position
+        # random position is generated if the position is not given
+        if position is None:
+            h = np.random.randint(low=0, high=self.height)
+            w = np.random.randint(low=0, high=self.width)
+            self._last_position = None
+            self._current_position = [h, w]
+        else:
+            self._last_position = self.current_position
+            self._current_position = position
 
     def _get_observation(self) -> np.ndarray:
         """
@@ -257,11 +272,11 @@ class UnevenMaze(gym.Env):
             self._ax = self._fig.add_subplot(111)
 
         # Define the x and y coordinates
-        altitudes = np.zeros(shape=(self.height, self.width))
+        altitudes = np.zeros(shape=(self.height + 1, self.width + 1))
 
         # Define the height
-        for i in range(self.height):
-            for j in range(self.width):
+        for i in range(self.height + 1):
+            for j in range(self.width + 1):
                 altitudes[i, j] = self._get_altitude([i, j])
 
         # Plot the height
@@ -320,6 +335,10 @@ class UnevenMaze(gym.Env):
     @property
     def current_position(self):
         return copy.deepcopy(self._current_position)
+
+    @property
+    def last_position(self):
+        return copy.deepcopy(self._last_position)
 
     @property
     def cost_height(self):
