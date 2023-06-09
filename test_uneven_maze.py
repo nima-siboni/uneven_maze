@@ -4,11 +4,10 @@ import gymnasium as gym
 import numpy as np
 
 config = {
-    "width": 10,
+    "width": 20,
     "height": 10,
     "mountain_height": 1.0,
-    "start_position": [0, 0],
-    "goal_position": [9, 0],
+    "goal_position": [10, 0],
     "max_steps": 100,
     "cost_height_max": 2.0,
     "cost_step_max": 1.0,
@@ -32,11 +31,11 @@ def test_init(config=config):
     assert env.mountain_height == config["mountain_height"]
     assert env._terrain_function == config["terrain_function"]
     assert env._cost_height_max == config["cost_height_max"]
-    assert env._start_position == config["start_position"]
     assert env._goal_position == config["goal_position"]
     assert env._max_steps == config["max_steps"]
     assert env._current_step == 0
-    assert env._current_position == config["start_position"]
+    assert env.current_position is None
+    assert env._start_position is None
 
     # Test the action space
     assert isinstance(env.action_space, gym.spaces.Discrete)
@@ -76,9 +75,11 @@ def test_reset(config=config):
 
 def test_reset_with_options(config=config):
     env = UnevenMaze(config)
-    env.reset(options={"cost_step": 0.1, "cost_height": 0.2})
+    env.reset(options={"cost_step": 0.1, "cost_height": 0.2, "start_position": [0, 0]})
     assert env.cost_step == 0.1
     assert env.cost_height == 0.2
+    assert env._start_position == [0, 0]
+    assert env.current_position == [0, 0]
 
 
 def test_step(config=config):
@@ -104,7 +105,7 @@ def test_step(config=config):
         assert np.all(observation >= np.array([0, 0, 0, 0]))
         assert np.all(
             observation
-            <= np.array([config["cost_height_max"], config["cost_step_max"], 10, 10])
+            <= np.array([config["cost_height_max"], config["cost_step_max"], 10, 20])
         )
 
         # Test the reward
@@ -131,12 +132,17 @@ def test_the_termination_condition(config=config):
     env = UnevenMaze(config)
 
     # Reset the environment
-    env.reset()
+    options = {
+        "cost_step": 0.1,
+        "cost_height": 0.2,
+        "start_position": [0, 0],
+    }  # the cost values are not important here
+    env.reset(options=options)
 
     terminated = False
     truncated = False
     # Test the step function
-    for _ in range(config["height"] + 1):
+    for _ in range(config["height"]):
         # Take a step going up, i.e. action 0
         observation, reward, terminated, truncated, info = env.step(action=0)
 
@@ -190,7 +196,8 @@ def test_reward_function(config=config):
         assert isinstance(reward, float)
         assert reward <= 0.0
 
-    env.reset()
+    options = {"cost_step": 0.1, "cost_height": 0.2, "start_position": [0, 0]}
+    env.reset(options=options)
 
     # Going up should be costlier than the step cost
     _, r, _, _, _ = env.step(0)
@@ -207,12 +214,10 @@ def test_reward_function(config=config):
 
 
 def test_reward_height_contribution(config=config):
-    config["cost_step_max"] = 0.0
-    config["cost_step_min"] = 0.0
-    config["cost_height_max"] = 3.14  # arbitrary number
-    config["cost_height_min"] = 3.14
     env = UnevenMaze(config)
-    env.reset()
+
+    options = {"cost_step": 0.0, "cost_height": 3.14, "start_position": [0, 0]}
+    env.reset(options=options)
     total_reward = 0
     # the total reward of going up the mountain should be equal to the height of the mountain
     for _ in range(config["height"]):
@@ -222,15 +227,12 @@ def test_reward_height_contribution(config=config):
 
 
 def test_reward_step_contribution(config=config):
-    config["cost_step_max"] = 2.5  # arbitrary number
-    config["cost_step_min"] = 2.5
-    config["cost_height_max"] = 0.0
-    config["cost_height_min"] = 0.0
+    options = {"cost_step": 2.5, "cost_height": 0.0, "start_position": [0, 0]}
     env = UnevenMaze(config)
-    env.reset()
+    env.reset(options=options)
     total_reward = 0
     # the total reward of going up the mountain should be equal to the height of the mountain
     for _ in range(config["height"]):
         _, r, _, _, _ = env.step(0)
         total_reward += r
-    assert total_reward == -2.5 * config["height"]
+    assert total_reward == -2.5 * (config["height"] - 1)
