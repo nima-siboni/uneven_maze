@@ -21,14 +21,14 @@ the higher the terrain. The agent can move in any direction, but moving uphill i
 
 The agent is configured by a dictionary, which is passed to the environment as `env_config` argument. The items in this dictionary are explained below.oo far.
 
-## Observations
+## The observations
 The observation space is a 1D vector of size 4:
 - the cost associated with unit of energy for going uphill
 - the cost associated with taking any step (no matter the direction)
 - x position
 - y position
 
-## Actions
+## The actions
 The agent can move in 2D space. The action space is discrete and the agent can move in forward/backward/left/right.
 
 ## The termination condition
