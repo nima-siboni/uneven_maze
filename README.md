@@ -83,3 +83,13 @@ env = UnevenMaze(config)
 
 env.reset()
 ```
+
+For evaluation purposes, the environment can be reseted such that the random values are fixed:
+```python
+options = {"cost_step": 0.0, # Any fixed desired value
+           "cost_height": 3.14, # Any fixed desired value
+           "start_position": [0, 0] # Any fixed desired position
+           }
+
+env.reset(options=options)
+```
