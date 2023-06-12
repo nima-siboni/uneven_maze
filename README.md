@@ -1,4 +1,4 @@
-# uneven maze environment
+# An Uneven Maze Environment
 This is a simple maze environment with uneven terrain, offering a simple setup for a multi-objective optimization.
 Currently the maze does not have an obstacle in it, but it can be easily added. The environment is implemented to be compatible with
 [Gymnasium v0.28.1](https://gymnasium.farama.org/v0.28.1/) and therefore can be used with any of the RL packages that are compatible with Gymnasium.
