@@ -60,6 +60,10 @@ git clone git@github.com:nima-siboni/uneven_maze.git
 cd uneven_maze
 pip install -e .
 ```
+You can also install the pre-commit hooks:
+```
+pre-commit install
+```
 # Usage
 The environment can be used as follows:
 ```python
@@ -86,6 +90,22 @@ env.reset()
 
 For evaluation purposes, the environment can be reseted such that the random values are fixed:
 ```python
+config = {
+    'width': 20,
+    'height': 10,
+    'mountain_height': 1., # the heighest point of the terrain; this is a parameter of the terrain function
+    'start_position': [0, 0],
+    'goal_position': [10, 0],
+    'max_steps': 100,
+    'cost_height_max': 1.,
+    'cost_height_min': 0.,
+    'cost_step_max': 1.,
+    'cost_step_min': 1.,
+    'terrain_function': sample_terrain_function # in this case we use the default terrain function
+}
+
+env = UnevenMaze(config)
+
 options = {"cost_step": 0.0, # Any fixed desired value
            "cost_height": 3.14, # Any fixed desired value
            "start_position": [0, 0] # Any fixed desired position
