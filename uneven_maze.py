@@ -284,7 +284,7 @@ class UnevenMaze(gym.Env):
 
         # Plot the start
         self._ax.plot(
-            self._start_position[1], self._start_position[0], "ro", markersize=10
+            self._start_position[1], self._start_position[0], "rs", markersize=10
         )
 
         # Plot the goal
@@ -292,9 +292,13 @@ class UnevenMaze(gym.Env):
             self._goal_position[1], self._goal_position[0], "go", markersize=10
         )
 
-        # Plot the agent
+        # Plot the agent with orange circle with a bigger size
         self._ax.plot(
-            self.current_position[1], self.current_position[0], "bo", markersize=10
+            self.current_position[1],
+            self.current_position[0],
+            "o",
+            markersize=12,
+            color="orange",
         )
 
         # Set the title
