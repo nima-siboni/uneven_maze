@@ -39,7 +39,7 @@ def test_init(config=config):
 
     # Test the action space
     assert isinstance(env.action_space, gym.spaces.Discrete)
-    assert env.action_space.n == 4
+    assert env.action_space.n == 8
 
     # Test the observation space
     assert isinstance(env.observation_space, gym.spaces.Box)
@@ -47,7 +47,14 @@ def test_init(config=config):
     assert np.all(env.observation_space.low == np.array([0, 0, 0, 0]))
     assert np.all(
         env.observation_space.high
-        == np.array([config["cost_height_max"], config["cost_step_max"], 10, 10])
+        == np.array(
+            [
+                config["cost_height_max"],
+                config["cost_step_max"],
+                config["height"],
+                config["width"],
+            ]
+        )
     )
 
 
