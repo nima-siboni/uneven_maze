@@ -45,7 +45,7 @@ def sample_terrain_function(
     # Define the y of the highest point of the mountain
     center_x = height / 2
     scaled_altitude_x = 1.0 - (x / center_x - 1.0) ** 2
-    scaled_altitude = scaled_altitude_x * (1.0 - y / width)
+    scaled_altitude = scaled_altitude_x * (1.0 - y / width) ** 2
     return mountain_height * scaled_altitude
 
 
@@ -79,7 +79,7 @@ class UnevenMaze(gym.Env):
         self._fig = None
         self._ax = None
         # Define the action space
-        self.action_space = gym.spaces.Discrete(4)
+        self.action_space = gym.spaces.Discrete(8)
 
         # Define the observation space
         self.observation_space = gym.spaces.Box(
@@ -181,6 +181,18 @@ class UnevenMaze(gym.Env):
         elif action == 2:
             next_position[1] += 1
         elif action == 3:
+            next_position[1] -= 1
+        elif action == 4:
+            next_position[0] += 1
+            next_position[1] += 1
+        elif action == 5:
+            next_position[0] += 1
+            next_position[1] -= 1
+        elif action == 6:
+            next_position[0] -= 1
+            next_position[1] += 1
+        elif action == 7:
+            next_position[0] -= 1
             next_position[1] -= 1
         else:
             raise ValueError("Invalid action.")
