@@ -12,9 +12,10 @@ from typing import Callable, Dict, List, Optional, Tuple
 # The parameters of the environment are:
 # - the size of the map (width and height)
 # - the function which represents the height of the map
-# - the weight of the height difference in the reward
-# - the weight of the constant step cost in the reward
-# - the constant step cost
+# - the max and min of the cost associated with taking a step; commonly a random value in this
+# range is chosen
+# - the max and min of the cost associated with going uphill for a unit displacement; commonly a
+# random value in this range is chosen.
 # - the starting position of the agent
 # - the goal position of the agent
 
@@ -234,10 +235,14 @@ class UnevenMaze(gym.Env):
 
         return reward
 
-    def _set_positions(self, position: Optional = None) -> np.ndarray:
+    def _set_positions(self, position: Optional = None) -> None:
         """
-        Set the last ond current positions.
-        :param position: the current position
+        Set the last ond current positions. The last_position is set to the current_position and
+        the current_position is set to the value given as the input parameter.
+
+        :param position: the value for the current position. If None is given the
+        current_position is set to a random value (within the maze), and the last_position is
+        set to None.
         """
         # Set the position
         # random position is generated if the position is not given
@@ -274,8 +279,6 @@ class UnevenMaze(gym.Env):
         - The goal is represented by a green circle.
         - The start is represented by a red circle.
         - The height of the terrain is represented by a color gradient of gray.
-
-        :return:
         """
         # Define the figure
         if not self._fig:

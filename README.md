@@ -29,7 +29,7 @@ The observation space is a 1D vector of size 4:
 - y position
 
 ## The actions
-The agent can move in 2D space. The action space is discrete and the agent can move in forward/backward/left/right.
+The agent can move in 2D space. The action space is discrete and the agent can move to any of its 8 nearest neighbors.
 
 ## The termination condition
 The agent terminates when it reaches the goal position.
