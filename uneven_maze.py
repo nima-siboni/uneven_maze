@@ -1,13 +1,20 @@
-# Uneven_maze: This is a RL environment compatible with Gymnasium which represents a grid map (or
-# maze) which is
-# not flat. As a consequence the cost of taking one step depends on whether it is uphill or downhill.
-# The agent is rewarded for reaching the goal and penalized for taking steps. The cost of the
-# steps is a weighted sum of a constant step cost and the height difference between the start and
-# end of the step. The weight is a parameter of the environment.
-# The height in of the map is represented by a function of x, y coordinates. The function is
-# specified as a parameter of the environment.
+"""
+Uneven_maze: This is a RL environment compatible with Gymnasium which represents a grid map (or
+maze) which is
+not flat. As a consequence the cost of taking one step depends on whether it is uphill or
+downhill. The agent is rewarded for reaching the goal and penalized for taking steps.
+The cost of the  steps is a weighted sum of a constant step cost and the height difference
+between the start and end of the step. The weight is a parameter of the environment.
+The height in of the map is represented by a function of x, y coordinates. The function is
+specified as a parameter of the environment.
+"""
 import copy
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
+# Import the necessary packages
+import gymnasium as gym
+import matplotlib.pyplot as plt
+import numpy as np
 
 # The parameters of the environment are:
 # - the size of the map (width and height)
@@ -19,23 +26,18 @@ from typing import Callable, Dict, List, Optional, Tuple
 # - the starting position of the agent
 # - the goal position of the agent
 
-# Import the necessary packages
-import gymnasium as gym
-import numpy as np
-import matplotlib.pyplot as plt
-
 
 # Define the height function
 def sample_terrain_function(
-    x: int, y: int, height: int, width: int, mountain_height: float
+    x_position: int, y_position: int, height: int, width: int, mountain_height: float
 ) -> float:
     """
     The height function is such that along the y axis it is a parabola with maximum at the
     center and zeros at the beginning and end of the domain. This parabola is reduced by a
     linear function along the x axis. This is to represent a mountain range which is higher
     close to left edge of the map and lower close to the right edge of the map.
-    :param x: the x coordinate
-    :param y: the y coordinate
+    :param x_position: the x coordinate
+    :param y_position: the y coordinate
     :param height: the height of the map
     :param width: the width of the map
     :param mountain_height: the maximum height of the mountain
@@ -45,8 +47,8 @@ def sample_terrain_function(
     """
     # Define the y of the highest point of the mountain
     center_x = height / 2
-    scaled_altitude_x = 1.0 - (x / center_x - 1.0) ** 2
-    scaled_altitude = scaled_altitude_x * (1.0 - y / width) ** 2
+    scaled_altitude_x = 1.0 - (x_position / center_x - 1.0) ** 2
+    scaled_altitude = scaled_altitude_x * (1.0 - y_position / width) ** 2
     return mountain_height * scaled_altitude
 
 
@@ -54,11 +56,13 @@ def sample_terrain_function(
 class UnevenMaze(gym.Env):
     """
     Description:
-        A maze with an uneven surface. The agent is rewarded for reaching the goal and penalized for taking steps. The cost of the steps is a weighted sum of a constant step cost and the height difference between the start and end of the step. The weight is a parameter of the environment.
-        Source:
+        A maze with an uneven surface. The agent is rewarded for reaching the goal and penalized
+        for taking steps. The cost of the steps is a weighted sum of a constant step cost and the
+        height difference between the start and end of the step. The weight is a parameter of
+        the environment.
     """
 
-    def __init__(self, config: Dict):
+    def __init__(self, config: Dict[str, Any]):
         # Define the parameters of the environment
         self._config = config
         self.width: int = config["width"]
@@ -67,11 +71,11 @@ class UnevenMaze(gym.Env):
         self._terrain_function: Callable = config["terrain_function"]
         self._cost_height_max: float = config["cost_height_max"]
         self._cost_height_min: float = config.get("cost_height_min", 0.0)
-        self._cost_height: Optional[float] = None
-        self._cost_step: Optional[float] = None
+        self._cost_height: float = 0.0
+        self._cost_step: float = 0.0
         self._cost_step_max: float = config["cost_step_max"]
         self._cost_step_min: float = config.get("cost_step_min", 0.0)
-        self._start_position = None
+        self._start_position: Optional[List[int]] = None
         self._goal_position: Tuple[int, int] = config["goal_position"]
         self._max_steps: int = config["max_steps"]
         self._current_step = 0
@@ -91,7 +95,7 @@ class UnevenMaze(gym.Env):
             dtype=np.float32,
         )
 
-    def step(self, action: int) -> Tuple[np.ndarray, float, bool, bool, Dict]:
+    def step(self, action: int) -> Tuple[np.ndarray, float, bool, bool, Dict[str, Any]]:
         """
         Take a step in the environment.
         :param action: the action to take
@@ -117,13 +121,13 @@ class UnevenMaze(gym.Env):
         observation = self._get_observation()
 
         # Define the info
-        info = {}
+        info: Dict[str, Any] = {}
 
         return observation, reward, terminated, truncated, info
 
-    def reset(
-        self, seed: Optional[int] = None, options: Optional[Dict] = None
-    ) -> Tuple[np.ndarray, Dict]:
+    def reset(  # pylint: disable=arguments-differ
+        self, seed: Optional[int] = None, options: Optional[Dict[str, Any]] = None
+    ) -> Tuple[np.ndarray, Dict[str, Any]]:
         """
         Reset the environment.
         :return: the initial observation
@@ -144,7 +148,8 @@ class UnevenMaze(gym.Env):
         # Save the start position
         self._start_position = self.current_position
 
-        # check if options is not given, the set the cost step to a random value between 0 and _cost_step_max
+        # check if options is not given, the set the cost step to a random value between 0 and
+        # _cost_step_max
         if options is None or len(options) == 0:
             self._cost_step = np.random.uniform(
                 self._cost_step_min, self._cost_step_max
@@ -152,7 +157,8 @@ class UnevenMaze(gym.Env):
         else:
             self._cost_step = options["cost_step"]
 
-        # check if option is not given, then set the cost height to a random value between 0 and _cost_height_max
+        # check if option is not given, then set the cost height to a random value between 0 and
+        # _cost_height_max
         if options is None or len(options) == 0:
             self._cost_height = np.random.uniform(
                 self._cost_height_min, self._cost_height_max
@@ -163,11 +169,11 @@ class UnevenMaze(gym.Env):
         # Get the observation
         observation = self._get_observation()
 
-        inforeset = {}
+        info_reset: Dict[str, Any] = {}
 
-        return observation, inforeset
+        return observation, info_reset
 
-    def _get_next_position(self, action):
+    def _get_next_position(self, action) -> np.ndarray:
         """
         Get the next position.
         :param action: the action to take
@@ -247,10 +253,10 @@ class UnevenMaze(gym.Env):
         # Set the position
         # random position is generated if the position is not given
         if position is None:
-            h = np.random.randint(low=0, high=self.height)
-            w = np.random.randint(low=0, high=self.width)
+            x_position = np.random.randint(low=0, high=self.height)
+            y_position = np.random.randint(low=0, high=self.width)
             self._last_position = None
-            self._current_position = [h, w]
+            self._current_position = [x_position, y_position]
         else:
             self._last_position = self.current_position
             self._current_position = position
@@ -272,7 +278,7 @@ class UnevenMaze(gym.Env):
 
         return observation
 
-    def render(self):
+    def render(self) -> None:
         """
         Rendering the environment as follows:
         - The agent is represented by a blue circle.
@@ -317,13 +323,13 @@ class UnevenMaze(gym.Env):
         )
 
         # Set the title
-        self._ax.set_title("Step: {}".format(self._current_step))
+        self._ax.set_title(f"Step: {self._current_step}")
 
         # Show the plot
         plt.show(block=False)
         plt.pause(0.1)
 
-    def _get_altitude(self, position):
+    def _get_altitude(self, position) -> float:
         """
         Get the altitude from the position
         :return: the height
@@ -333,36 +339,35 @@ class UnevenMaze(gym.Env):
         )
         return altitude
 
-    def _get_terminated(self):
+    def _get_terminated(self) -> bool:
         """if the current position is the goal position, return True"""
-        if self.current_position == self._goal_position:
-            return True
-        else:
-            return False
+        return bool(self.current_position == self._goal_position)
 
-    def _get_truncated(self):
+    def _get_truncated(self) -> bool:
         """if the current step is the maximum step, return True"""
-        if self._current_step == self._max_steps:
-            return True
-        else:
-            return False
+        return bool(self._current_step == self._max_steps)
 
     @property
-    def config(self):
+    def config(self) -> Dict[str, Any]:
+        """Return the configuration of the environment"""
         return self._config
 
     @property
-    def current_position(self):
+    def current_position(self) -> List[int]:
+        """Return the current position of the agent"""
         return copy.deepcopy(self._current_position)
 
     @property
-    def last_position(self):
+    def last_position(self) -> List[int]:
+        """Return the last position of the agent"""
         return copy.deepcopy(self._last_position)
 
     @property
-    def cost_height(self):
+    def cost_height(self) -> float:
+        """Return the cost of height difference"""
         return self._cost_height
 
     @property
-    def cost_step(self):
+    def cost_step(self) -> float:
+        """Return the cost of step"""
         return self._cost_step

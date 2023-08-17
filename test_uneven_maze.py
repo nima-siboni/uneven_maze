@@ -1,7 +1,8 @@
-# testing the uneven maze
-from uneven_maze import sample_terrain_function, UnevenMaze
+"""testing the uneven maze"""
 import gymnasium as gym
 import numpy as np
+
+from uneven_maze import UnevenMaze, sample_terrain_function
 
 config = {
     "width": 20,
