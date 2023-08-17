@@ -1,5 +1,6 @@
 # An Uneven Maze Environment
 [![linting: pylint](https://img.shields.io/badge/linting-pylint-yellowgreen)](https://github.com/pylint-dev/pylint)
+![linting: flake8](https://img.shields.io/badge/linting-flake8-yellowgreen)
 
 This is a simple maze environment with uneven terrain, offering a simple setup for a multi-objective optimization.
 Currently the maze does not have an obstacle in it, but it can be easily added. The environment is implemented to be compatible with
