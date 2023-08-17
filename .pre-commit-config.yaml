@@ -1,3 +1,4 @@
+exclude: test_uneven_maze.py
 default_language_version:
   python: python3.10
 repos:
